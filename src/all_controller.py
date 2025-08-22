@@ -6,7 +6,7 @@ from util import *
 
 def modbus_write(address, value, slave):
     upper, lower = decimal_to_hex(value)
-    client.write_registers(address, [upper, lower], slave=slave)
+    client.write_registers(address, [upper, lower], device_id=slave)
 
 def initialize_motors():
     """チェックされたモーターを初期化する"""
@@ -14,9 +14,9 @@ def initialize_motors():
     try:
         for i in range(28):
             if motor_enabled[i].get():
-                slave_id = int(entry_ids[i].get())
-                client.write_registers(address=0x0066, values=[0xffff, 0xfffb], slave=slave_id)
-                initialized_motors.append(slave_id)
+                device_id = int(entry_ids[i].get())
+                client.write_registers(address=0x0066, values=[0xffff, 0xfffb], device_id=device_id)
+                initialized_motors.append(device_id)
         
         if initialized_motors:
             status_label.config(text=f"Motors {', '.join(map(str, initialized_motors))} initialized successfully", fg="green")
@@ -31,10 +31,10 @@ def send_speed():
     try:
         for i in range(28):
             if motor_enabled[i].get():
-                slave_id = int(entry_ids[i].get())
+                device_id = int(entry_ids[i].get())
                 speed = int(entry_speeds[i].get())
-                client.write_registers(address=0x005e, values=[0, speed], slave=slave_id)
-                processed_motors.append(slave_id)
+                client.write_registers(address=0x005e, values=[0, speed], device_id=device_id)
+                processed_motors.append(device_id)
         
         if processed_motors:
             status_label.config(text=f"Speed sent successfully to motors {', '.join(map(str, processed_motors))}", fg="green")
@@ -49,10 +49,10 @@ def send_step():
     try:
         for i in range(28):
             if motor_enabled[i].get():
-                slave_id = int(entry_ids[i].get())
+                device_id = int(entry_ids[i].get())
                 step = int(entry_steps[i].get())
-                modbus_write(0x005c, step, slave_id)
-                processed_motors.append(slave_id)
+                modbus_write(0x005c, step, device_id)
+                processed_motors.append(device_id)
         
         if processed_motors:
             status_label.config(text=f"Step sent successfully to motors {', '.join(map(str, processed_motors))}", fg="green")
@@ -80,7 +80,6 @@ def toggle_all_motors():
 
 # Modbus接続の設定
 client = ModbusClient(
-    method=MODBUS_METHOD,
     port=MODBUS_PORT,
     baudrate=MODBUS_BAUDRATE,
     timeout=MODBUS_TIMEOUT,
@@ -126,7 +125,14 @@ for i in range(28):
     col = i % 7
     
     # モーターブロックのフレーム
-    motor_frame = tk.LabelFrame(scrollable_frame, text=f"Motor {i+1}", padx=5, pady=5)
+    # 部位名の定義
+    motor_names = [
+        "Front Drive Wheel", "Rear Drive Wheel", "Front Clamp", "Rear Clamp", "Front Leg UpDown", "Rear Leg UpDown", "Stopper Clamp", "Stopper Slide",
+        "Upper UpDown", "Upper Rotation", "Arm Slide", "Shoulder", "Hand Drive Wheel", "Hand Clamp",
+        "Front Drive Wheel", "Rear Drive Wheel", "Front Clamp", "Rear Clamp", "Front Leg UpDown", "Rear Leg UpDown", "Stopper Clamp", "Stopper Slide",
+        "Upper UpDown", "Upper Rotation", "Arm Slide", "Shoulder", "Hand Drive Wheel", "Hand Clamp"
+    ]
+    motor_frame = tk.LabelFrame(scrollable_frame, text=motor_names[i], padx=5, pady=5)
     motor_frame.grid(row=row, column=col, padx=5, pady=5, sticky="nsew")
     motor_frames.append(motor_frame)
     
