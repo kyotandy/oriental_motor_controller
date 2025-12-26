@@ -32,7 +32,7 @@ def set_new_slave_id(current_id, new_id):
 
         # 1. 新しいSlave IDを書き込む (32bitレジスタ [上位16bit, 下位16bit])
         # 以前成功したコードに合わせ、引数名は slave (または device_id) を使用
-        write_res = client.write_registers(address=ADDR_SLAVE_ID, values=[0, new_id], slave=current_id)
+        write_res = client.write_registers(address=ADDR_SLAVE_ID, values=[0, new_id], device_id=current_id)
         
         if write_res.isError():
             print(f"ID書き込みエラー: {write_res}")
@@ -42,7 +42,7 @@ def set_new_slave_id(current_id, new_id):
         print("設定反映（構成設定）を実行中...")
 
         # 2. 構成設定(Config)を実行して不揮発メモリに保存・反映
-        config_res = client.write_register(address=ADDR_CONFIG_COMMAND, value=1, slave=current_id)
+        config_res = client.write_register(address=ADDR_CONFIG_COMMAND, value=1, device_id=current_id)
 
         if config_res.isError():
             print(f"構成設定エラー。手動で電源を再投入してください。")
