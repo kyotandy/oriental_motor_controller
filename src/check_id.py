@@ -63,15 +63,17 @@ def scan_modbus_devices():
     found_devices = []
     
     for target_id in range(1, 33):
-        print(f"Scanning ID: {target_id}...", end="\r")
-        res = client.read_holding_registers(address=0x1380, count=2, device_id=target_id)
-        time.sleep(1)
-        if not res.isError():
-            print(f"\nSUCCESS! Found device at ID: {target_id}")
-            break
-        else:
-            print("\nDevice not found.")
-
+        try:        
+            print(f"Scanning ID: {target_id}...", end="\r")
+            res = client.read_holding_registers(address=0x1380, count=2, device_id=target_id)
+            time.sleep(1)
+            if not res.isError():
+                print(f"\nSUCCESS! Found device at ID: {target_id}")
+                break
+            else:
+                print("\nDevice not found.")
+        except Exception:
+            continue
 
 if __name__ == "__main__":
     try:
