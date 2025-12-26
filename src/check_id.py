@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-RS485 Modbus RTU デバイスIDスキャナー
-チェーン接続されたドライバのデバイスIDを検出します
+RS485 Modbus RTU Device ID Scanner
+Detects device IDs of chain-connected drivers
 """
 
 import serial
@@ -9,7 +9,7 @@ from pymodbus.client import ModbusSerialClient as ModbusClient
 from pymodbus.exceptions import ModbusException
 import time
 
-# Modbus設定
+# Modbus settings
 MODBUS_METHOD = 'rtu'
 MODBUS_PORT = '/dev/ttyUSB0'
 MODBUS_BAUDRATE = 115200
@@ -17,30 +17,30 @@ MODBUS_TIMEOUT = 1
 MODBUS_PARITY = serial.PARITY_EVEN
 MODBUS_STOPBITS = serial.STOPBITS_ONE
 
-# デバイスID情報が格納されているアドレス
+# Device ID address
 MODBUS_ID_ADDRESS = 0x1380
 
-# スキャン範囲（Modbusデバイスアドレスは通常1-247）
+# Scan range (Modbus device addresses are typically 1-247)
 SCAN_START = 1
 SCAN_END = 247
 
 def scan_modbus_devices():
     """
-    RS485チェーン上の全デバイスをスキャンしてデバイスIDを検出
+    Scan all devices on RS485 chain and detect device IDs
     """
     print("=" * 70)
-    print("RS485 Modbus RTU デバイスIDスキャナー")
+    print("RS485 Modbus RTU Device ID Scanner")
     print("=" * 70)
-    print(f"ポート: {MODBUS_PORT}")
-    print(f"ボーレート: {MODBUS_BAUDRATE}")
-    print(f"パリティ: EVEN")
-    print(f"ストップビット: 1")
-    print(f"タイムアウト: {MODBUS_TIMEOUT}秒")
-    print(f"スキャン範囲: {SCAN_START} - {SCAN_END}")
+    print(f"Port: {MODBUS_PORT}")
+    print(f"Baudrate: {MODBUS_BAUDRATE}")
+    print(f"Parity: EVEN")
+    print(f"Stopbits: 1")
+    print(f"Timeout: {MODBUS_TIMEOUT}s")
+    print(f"Scan range: {SCAN_START} - {SCAN_END}")
     print("=" * 70)
     print()
     
-    # Modbusクライアント作成
+    # Create Modbus client
     client = ModbusClient(
         port=MODBUS_PORT,
         baudrate=MODBUS_BAUDRATE,
@@ -49,39 +49,39 @@ def scan_modbus_devices():
         stopbits=MODBUS_STOPBITS
     )
     
-    # 接続
+    # Connect
     if not client.connect():
-        print("❌ エラー: Modbusポートに接続できません")
+        print("ERROR: Cannot connect to Modbus port")
         return
     
-    print("✅ Modbusポートに接続しました")
+    print("Connected to Modbus port")
     print()
-    print("デバイスをスキャン中...")
+    print("Scanning devices...")
     print("-" * 70)
     
     found_devices = []
     
     try:
         for device_id in range(SCAN_START, SCAN_END + 1):
-            # プログレス表示（10個ごと）
+            # Progress display (every 10 devices)
             if device_id % 10 == 0:
-                print(f"スキャン中: {device_id}/{SCAN_END}...", end='\r')
+                print(f"Scanning: {device_id}/{SCAN_END}...", end='\r')
             
             try:
-                # デバイスIDアドレスから2レジスタ読み取り
+                # Read 2 registers from device ID address
                 result = client.read_holding_registers(
                     address=MODBUS_ID_ADDRESS,
                     count=2,
-                    slave=device_id  # pymodbusでは'slave'パラメータを使用
+                    slave=device_id
                 )
                 
-                # 応答があった場合
+                # If response received
                 if not result.isError():
-                    # レジスタ値を取得
+                    # Get register values
                     registers = result.registers
                     
-                    # デバイスIDを計算（2つのレジスタから32ビット値を構成）
-                    # 上位16ビット + 下位16ビット
+                    # Calculate device ID (combine 2 registers into 32-bit value)
+                    # High 16 bits + Low 16 bits
                     device_info_value = (registers[0] << 16) | registers[1]
                     
                     found_devices.append({
@@ -90,36 +90,36 @@ def scan_modbus_devices():
                         'value': device_info_value
                     })
                     
-                    print(f"\n✅ デバイス発見!")
-                    print(f"   Modbusアドレス: {device_id}")
-                    print(f"   レジスタ値: [{registers[0]:04X}h, {registers[1]:04X}h]")
-                    print(f"   結合値: 0x{device_info_value:08X} ({device_info_value})")
+                    print(f"\nDevice found!")
+                    print(f"   Modbus address: {device_id}")
+                    print(f"   Register values: [0x{registers[0]:04X}, 0x{registers[1]:04X}]")
+                    print(f"   Combined value: 0x{device_info_value:08X} ({device_info_value})")
                     print("-" * 70)
                     
-                # 次のデバイスをスキャンする前に少し待機
+                # Wait before scanning next device
                 time.sleep(0.05)
                 
             except ModbusException as e:
-                # タイムアウトや通信エラーは無視（デバイスなし）
+                # Ignore timeout or communication errors (no device)
                 pass
             except Exception as e:
-                # その他のエラー
-                if device_id % 50 == 0:  # 50個ごとにエラー表示
-                    print(f"\n⚠️  アドレス {device_id} でエラー: {e}")
+                # Other errors
+                if device_id % 50 == 0:  # Display error every 50 devices
+                    print(f"\nWARNING: Error at address {device_id}: {e}")
     
     finally:
         client.close()
     
-    # 結果サマリー
+    # Result summary
     print("\n")
     print("=" * 70)
-    print("スキャン結果サマリー")
+    print("Scan Result Summary")
     print("=" * 70)
     
     if found_devices:
-        print(f"\n見つかったデバイス数: {len(found_devices)}")
+        print(f"\nDevices found: {len(found_devices)}")
         print()
-        print(f"{'Modbusアドレス':<15} {'レジスタ[0]':<15} {'レジスタ[1]':<15} {'結合値(10進)':<20}")
+        print(f"{'Modbus Addr':<15} {'Register[0]':<15} {'Register[1]':<15} {'Combined (dec)':<20}")
         print("-" * 70)
         
         for device in found_devices:
@@ -128,12 +128,12 @@ def scan_modbus_devices():
                   f"0x{device['registers'][1]:04X} ({device['registers'][1]:<5}) "
                   f"{device['value']:<20}")
     else:
-        print("\n⚠️  デバイスが見つかりませんでした")
-        print("\n考えられる原因:")
-        print("  - RS485配線の問題")
-        print("  - ボーレート、パリティなどの設定ミス")
-        print("  - デバイスの電源が入っていない")
-        print("  - アドレス範囲外にデバイスがある")
+        print("\nWARNING: No devices found")
+        print("\nPossible causes:")
+        print("  - RS485 wiring issues")
+        print("  - Incorrect baudrate, parity, or other settings")
+        print("  - Devices not powered on")
+        print("  - Devices outside address range")
     
     print("=" * 70)
 
@@ -142,8 +142,8 @@ if __name__ == "__main__":
     try:
         scan_modbus_devices()
     except KeyboardInterrupt:
-        print("\n\n中断されました")
+        print("\n\nInterrupted")
     except Exception as e:
-        print(f"\n❌ エラー: {e}")
+        print(f"\nERROR: {e}")
         import traceback
         traceback.print_exc()
