@@ -13,7 +13,7 @@ NEW_ID = 2       # 新しく設定したいID（1-31）
 
 # オリエンタルモーター パラメータアドレス (AZシリーズ例)
 ADDR_SLAVE_ID = 0x1380        # スレーブID設定レジスタ
-ADDR_CONFIG_COMMAND = 0x007C   # 構成設定コマンド (1を書き込むと反映)
+NV_MEMORY_WRITE_ADDRESS = 0x0192
 
 def set_new_slave_id():
     client = ModbusClient(
@@ -45,7 +45,7 @@ def set_new_slave_id():
 
         # 2. 構成設定(Config)を実行して不揮発メモリに保存・反映
         # 0x007Cに 1 を書き込む
-        config_res = client.write_register(address=ADDR_CONFIG_COMMAND, value=1, slave=CURRENT_ID)
+        config_res = client.write_register(address=NV_MEMORY_WRITE_ADDRESS, value=1, slave=CURRENT_ID)
 
         if config_res.isError():
             print(f"構成設定コマンドの送信に失敗しました。電源の再投入を行ってください。")
