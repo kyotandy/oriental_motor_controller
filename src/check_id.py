@@ -45,7 +45,7 @@ def scan_modbus_devices():
         port=MODBUS_PORT,
         baudrate=MODBUS_BAUDRATE,
         timeout=MODBUS_TIMEOUT,
-        retries=0
+        retries=0,
         parity=MODBUS_PARITY,
         stopbits=MODBUS_STOPBITS
     )
