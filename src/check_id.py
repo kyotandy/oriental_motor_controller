@@ -64,7 +64,8 @@ def scan_modbus_devices():
     
     for target_id in range(1, 33):
         print(f"Scanning ID: {target_id}...", end="\r")
-        res = client.read_holding_registers(address=0x1380, count=2, device_id=target_id) # pymodbusのバージョンにより device_id か slave
+        res = client.read_holding_registers(address=0x1380, count=2, device_id=target_id)
+        time.sleep(1)
         if not res.isError():
             print(f"\nSUCCESS! Found device at ID: {target_id}")
             break
