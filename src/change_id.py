@@ -34,7 +34,7 @@ def set_new_slave_id():
         # 1. 新しい局番号(Slave ID)を書き込む
         # 32bitレジスタのため、count=2で書き込みます
         # [0, NEW_ID] の順で送るのが一般的です
-        write_res = client.write_registers(address=ADDR_SLAVE_ID, values=[0, NEW_ID], slave=CURRENT_ID)
+        write_res = client.write_registers(address=ADDR_SLAVE_ID, values=[0, NEW_ID], device_id=CURRENT_ID)
         
         if write_res.isError():
             print(f"IDの書き込みに失敗しました: {write_res}")
@@ -45,7 +45,7 @@ def set_new_slave_id():
 
         # 2. 構成設定(Config)を実行して不揮発メモリに保存・反映
         # 0x007Cに 1 を書き込む
-        config_res = client.write_register(address=NV_MEMORY_WRITE_ADDRESS, value=1, slave=CURRENT_ID)
+        config_res = client.write_register(address=NV_MEMORY_WRITE_ADDRESS, value=1, device_id=CURRENT_ID)
 
         if config_res.isError():
             print(f"構成設定コマンドの送信に失敗しました。電源の再投入を行ってください。")
