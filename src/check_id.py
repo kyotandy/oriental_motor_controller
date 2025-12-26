@@ -22,7 +22,7 @@ MODBUS_ID_ADDRESS = 0x1380
 
 # Scan range (Modbus device addresses are typically 1-247)
 SCAN_START = 1
-SCAN_END = 247
+SCAN_END = 32
 
 def scan_modbus_devices():
     """
