@@ -10,8 +10,8 @@ MODBUS_BAUDRATE = 115200
 MODBUS_PARITY = serial.PARITY_EVEN
 
 # オリエンタルモーター パラメータアドレス (AZシリーズ等)
-ADDR_SLAVE_ID = 0x1380        # スレーブID設定レジスタ
-ADDR_CONFIG_COMMAND = 0x0192   # 構成設定コマンド
+ADDR_SLAVE_ID = 0x1380           # スレーブID設定レジスタ
+ADDR_NV_BATCH_WRITE = 0x0192     # NVメモリ一括書き込み（RAM → 不揮発）
 
 def set_new_slave_id(current_id, new_id):
     client = ModbusClient(
@@ -39,17 +39,18 @@ def set_new_slave_id(current_id, new_id):
             return
 
         time.sleep(0.5)
-        print("設定反映（構成設定）を実行中...")
+        print("NVメモリ一括書き込みを実行中...")
 
-        # 2. 構成設定(Config)を実行して不揮発メモリに保存・反映
-        config_res = client.write_register(address=ADDR_CONFIG_COMMAND, value=1, device_id=current_id)
+        # 2. NVメモリ一括書き込み（32bit: [0, 1]）。通信パラメータは構成設定不要で、電源再投入で反映
+        nv_res = client.write_registers(address=ADDR_NV_BATCH_WRITE, values=[0, 1], device_id=current_id)
 
-        if config_res.isError():
-            print(f"構成設定エラー。手動で電源を再投入してください。")
+        if nv_res.isError():
+            print(f"NV書き込みエラー: {nv_res}")
+            print("RAM上のみ変更されている可能性があります。電源再投入すると元のIDに戻ります。")
         else:
             print("=" * 60)
-            print(f"成功！ ID: {current_id} は ID: {new_id} に変更されました。")
-            print(f"次回からは ID: {new_id} を使用してください。")
+            print(f"成功！ ID: {current_id} → {new_id} をNVに保存しました。")
+            print(f"電源を再投入すると ID: {new_id} で通信してください。")
             print("=" * 60)
 
     except Exception as e:
